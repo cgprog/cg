@@ -1,0 +1,119 @@
+#include<stdio.h>
+#include<GL/glut.h>
+GLint x1=200,y1=200,x2=100,y2=300,x3=200,y3=400,x4=300,y4=300;
+float R=0.0,G=0.0,B=0.0;
+
+void init()
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0,500,0,500);
+	glViewport(0,0,500,500);
+}
+
+void colorMenu(int id)
+{
+	switch(id)
+	{
+	    case 1:R=1.0;G=0.0;B=0.0;glutPostRedisplay();break;
+		case 2:R=0.0;G=1.0;B=0.0;glutPostRedisplay();break;
+		case 3:R=0.0;G=0.0;B=1.0;glutPostRedisplay();break;
+	}
+
+}
+
+void drawPixel(int x,int y)
+{
+	glColor3f(R,G,B);
+	glBegin(GL_POINTS);
+	glVertex2f(x,y);
+	glEnd();
+	glFlush();
+}
+
+void edge_detect(int x1,int y1,int x2,int y2,int *le,int *re)
+{
+	float x,mx,temp;
+	if((y2-y1)<0)
+	{
+		temp=x1;x1=x2;x2=temp;
+		temp=y1;y1=y2;y2=temp;
+	}
+	if((y2-y1)!=0)
+	{
+		mx=(x2-x1)/(y2-y1);
+	}
+	else
+	{
+		mx=x2-x1;
+	}
+	x=x1;
+	for(int i=y1;i<y2;i++)
+	{
+		if(x<le[i])
+		{
+			le[i]=x;
+		}
+		if(x>re[i])
+		{
+			re[i]=x;
+		}
+		x+=mx;
+	}
+}
+
+void scanfill()
+{
+	GLint le[500],re[500];
+	int i,y;
+	for(i=0;i<500;i++)
+	{
+		le[i]=500;
+		re[i]=0;
+	}
+	edge_detect(x1,y1,x2,y2,le,re);
+	edge_detect(x2,y2,x3,y3,le,re);
+	edge_detect(x3,y3,x4,y4,le,re);
+	edge_detect(x4,y4,x1,y1,le,re);
+
+	for(y=0;y<500;y++)
+	{
+		for(i=le[y];i<=re[y];i++)
+		{
+			drawPixel(i,y);
+		}
+	}
+}
+
+void display()
+{
+	glClearColor(1.0,1.0,1.0,1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+	
+	glColor3f(R,G,B);
+	glBegin(GL_LINE_LOOP);
+	glVertex2f(x1,y1);
+	glVertex2f(x2,y2);
+	glVertex2f(x3,y3);
+	glVertex2f(x4,y4);
+	glEnd();
+	scanfill();
+	glFlush();
+}
+
+int main(int argc,char **argv)
+{
+	glutInit(&argc,argv);
+	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);
+	glutInitWindowSize(500,500);
+	glutCreateWindow("Scanline");
+	init();
+	glutDisplayFunc(display);
+	glutCreateMenu(colorMenu);
+	glutAddMenuEntry("RED",1);
+	glutAddMenuEntry("GREEN",2);
+	glutAddMenuEntry("BLUE",3);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	glutMainLoop();
+	return 0;
+}
